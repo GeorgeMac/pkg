@@ -8,14 +8,14 @@ import (
 )
 
 var (
-	Statement = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	statement = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
 // TruncateAll takes a database connection, lists all the tables which
 // aren't tracking schema_migrations and issues a cascading truncate
 // across each of them.
 func TruncateAll(db *sql.DB) error {
-	rows, err := Statement.
+	rows, err := statement.
 		Select("tablename").
 		From("pg_tables").
 		Where(sq.Eq{"schemaname": "public"}).
