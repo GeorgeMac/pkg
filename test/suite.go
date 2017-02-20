@@ -1,7 +1,6 @@
 package test
 
 import (
-	"database/sql"
 	"os"
 	"testing"
 )
@@ -9,12 +8,23 @@ import (
 // SuiteConfig is used to configure a Suite
 // This is done so by passing to SuiteOption types
 type SuiteConfig struct {
-	db     *sql.DB
-	dbConf DBConfig
+	setup, teardown Actions
 }
 
 // SuiteOption is used to manipulate and SuiteConfig type
 type SuiteOption func(*SuiteConfig)
+
+// Setup takes an Action and ensures it is called before
+// a packages tests are performed.
+func Setup(action Action) SuiteOption {
+	return action.AsSetup
+}
+
+// Teardown takes Action and ensures it is called after
+// a packages tests are completed.
+func Teardown(action Action) SuiteOption {
+	return action.AsTeardown
+}
 
 // Suite is a helper function for performing common setup/tear-down
 // around a packages test. It takes a pointer to a testing.M, runs the
@@ -26,19 +36,39 @@ func Suite(m *testing.M, opts ...SuiteOption) {
 		opt(&conf)
 	}
 
-	for _, setup := range conf.dbConf.setup {
-		if err := setup(conf.db); err != nil {
-			panic(err)
-		}
-	}
+	// run all setup Actions
+	conf.setup.runAll()
 
+	// run test suite
 	status := m.Run()
 
-	for _, tear := range conf.dbConf.teardown {
-		if err := tear(conf.db); err != nil {
+	// run all teardown Actions
+	conf.teardown.runAll()
+
+	os.Exit(status)
+}
+
+// Action is something that can take place before or after tests
+// and may return an error
+type Action func() error
+
+// AsSetup is a SuiteOption which appends the Action as a setup step
+func (a Action) AsSetup(conf *SuiteConfig) { conf.setup.add(a) }
+
+// AsTeardown is a SuiteOption which appends the Action as a teardown step
+func (a Action) AsTeardown(conf *SuiteConfig) { conf.teardown.add(a) }
+
+// Actions is a slice of Action
+type Actions []Action
+
+func (a *Actions) add(Action Action) {
+	*a = append(*a, Action)
+}
+
+func (a *Actions) runAll() {
+	for _, action := range *a {
+		if err := action(); err != nil {
 			panic(err)
 		}
 	}
-
-	os.Exit(status)
 }

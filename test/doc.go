@@ -4,11 +4,12 @@
 //
 //  import (
 //      . "github.com/GeorgeMac/pkg/test"
+//      . "github.com/GeorgeMac/pkg/test/db"
 //      "github.com/GeorgeMac/pkg/psql"
 //  )
 //
 //  func TestMain(m *testing.M) {
 //      db, - := os.Open(os.Getenv("DATABASE_URL"))
-//      Suite(m, DB(db, Setup(Seed), Teardown(psql.TruncateAll)))
+//      Suite(m, Setup(DB(db, Seed)), Teardown(DB(db, psql.TruncateAll)))
 //  }
 package test
