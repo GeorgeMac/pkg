@@ -15,7 +15,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-    db, - := os.Open(os.Getenv("DATABASE_URL"))
+    db, _ := os.Open(os.Getenv("DATABASE_URL"))
 
     // test package exposes a DSL for performing actions
     // before and after tests.
